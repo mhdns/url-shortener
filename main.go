@@ -10,17 +10,33 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type paths struct {
+	Path string
+	URL  string
+}
+
 func main() {
+	paths := getPaths("urls.yaml")
 
-	// type url struct {
-	// 	URL  string `yaml:"path"`
-	// 	Path string `yaml:"url"`
-	// }
+	// http.Redirect(w, r, newUrl, http.StatusSeeOther)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", helloworld)
+	for _, v := range paths {
+		// fmt.Println(v.Path)
+		mux.HandleFunc(v.Path, func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, v.URL, http.StatusSeeOther)
+		})
+	}
+	// fmt.Print(mux)
+	http.ListenAndServe(":5000", mux)
+}
 
-	// type urls struct {
-	// 	URLList []url `yaml:"PathLists"`
-	// }
-	// res := urls{}
+func helloworld(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hello World!")
+}
+
+func getPaths(filename string) []paths {
+	// Read File
 	file, err := os.Open("urls.yaml")
 	if err != nil {
 		log.Fatalln(err)
@@ -32,38 +48,15 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// fmt.Println(string(data))
-
-	// type URLPair struct {
-	// 	Path string
-	// 	URL  string
-	// }
-
-	// type URLList struct {
-	// 	List []URLPair
-	// }
-
-	// var urls URLList
-
-	var urls []interface{}
+	// Parse Yaml
+	var urls []paths
 
 	err = yaml.Unmarshal(data, &urls)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("%T\n", urls)
 
-	for i, v := range urls {
-		fmt.Println(i, v)
-		fmt.Printf("%T\n", v)
-	}
-
-	// http.HandleFunc("/", helloworld)
-	// http.ListenAndServe(":5000", nil)
-}
-
-func helloworld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello World!")
+	return urls
 }
 
 func exampleYaml() {
